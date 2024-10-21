@@ -1,0 +1,150 @@
+---
+title: "Creating obs SFS for fastsimcoal"
+author: "Isabel Alves"
+date: "2024-03-07"
+output: html_document
+---
+
+Here we go from the the genotype matrices containing the selected samples (see demoHist_Yeast3039) to computing the 1D, 2D and the multiple dimension SFS. 
+
+The initial input files are: 
+
+1. The matrices with the AA - full3039Matrix.AllPositions.DP10.GQ20.Mind20.99pNonMiss.ExcHet99.chromosome*
+
+2. GT matrices - demoInf_31Strains_SNVs.GT/chrpos (name depends on how many samples we have)
+
+3. the strain data.frame from Victor - operationalTable_Full3039Sace_Clades_Ploidy_Aneuploidy.csv
+
+4. Annotation table - full3039Matrix.DP10.GQ20.Mind20.99pNonMiss.ExcHet99.ann_4SIFT_SIFTannotations.xls
+
+
+# Final set
+
+Below I generate multiple SFSs. First I start by removing sites that follow into coding regions and then use that set to compute the 1D, 2D and multi-dimensional SFS. The following chunks need to be run all together. 
+
+
+## 1. Getting the order of the samples  
+
+..in the vcf file containing the samples used for demographic inference.
+
+```{bash, echo = T, eval = F}
+# in pangloss
+cd /shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/SFS_134samples
+
+less full3039Matrix.AllPositions.DP10.GQ20.Mind20.99pNonMiss.ExcHet99.JubinExtracted.BiSNPs.finalSamples.vcf.gz | grep "#CHROM" | cut -d$'\t' -f10- | sed 's/\t/\n/g' > samples26_vcf.txt
+
+```
+
+## 2. Getting table w/ information for all/onlyNonCoding SNPs
+
+The script selectingSNP_AA_4.R allows to select only those sites for which the ancestral allele (AA) is known. 
+We can also exclude/include sites within coding regions
+
+```{bash, echo = T, eval = F}
+# in pangloss
+cd /shared/home/ialves/demoHist_yeast3039/02-scripts
+
+# all - if we want both coding and non-coding sites
+# onlyNonCoding - if we want only nonCoding
+sbatch selectingSNP_AA_4.sh <all or onlyNonCoding>
+
+```
+This generates the following output:
+
+  1. SNPs_<all/onlyNonCoding>.csv 
+  
+## 3. Getting GT matrix w/ containing all/onlyNonCoding SNPs
+
+The files: 
+
+  1. samplesXX_vcf.txt
+  2. SNPs_<all/onlyNonCoding>.csv 
+  3. list of strains per clade
+  4. GT matrix (output from extractSamples_3.sh)
+
+Are used to generate a GT matrix for the samples contained in (1) and SNPs contained in (2). 
+**This matrix is already converted into AA (i.e 0 --> homozygous ancestral).**
+  
+```{bash, echo = T, eval = F}
+# in pangloss
+cd /shared/home/ialves/demoHist_yeast3039/02-scripts
+
+# all - if we want both coding and non-coding sites
+# onlyNonCoding - if we want only nonCoding
+sbatch convertREFtoAA_5.sh -g <GTmatrix with full path> -s <samples File> -l <strain/clade list> -t <snptype> -d <path to 03-data>
+
+#example
+sbatch convertREFtoAA_5.sh -g "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/SFS_137samples/demoInf_27Strains_SNVs" -s "samples27.txt" -l "list_of_strains_per_Clade.txt" -t "onlyNonCoding" -d "/shared/home/ialves/demoHist_yeast3039/03-data"
+ 
+```
+This generates the following outputs:
+
+  1. samples27.AA.chrPos
+  2. samples27.coded.AA.GT
+  3. df_Clade_Strains.txt
+  4. df_zygosity.txt
+  
+  
+## 4. Getting the observed 1D-SFS
+
+These files are used to generate the observed 1D-SFS as it follows: 
+
+```{bash, echo = T, eval = F}
+# in pangloss
+cd /shared/home/ialves/demoHist_yeast3039/02-scripts
+
+# all - if we want both coding and non-coding sites
+# onlyNonCoding - if we want only nonCoding
+sbatch computingOBS_1D_SFS_6.sh -d <path to files> -s <samples File> -f <strain/clade list> -z <zigosity table> -g <GTmatrix name>
+
+#example
+sbatch computingOBS_1D_SFS_6.sh -d "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/SFS_134samples" -s "samples27.txt" -f "df_Clade_Strains.txt" -z "df_zygosity.txt" -g "samples27.coded.AA.GT"
+ 
+```
+This generates as many outputs as the # of clades: 1D-SFS_*.sfs
+
+## 5. Computing the observed 2D- and multi-SFS
+
+In this step we need the file: 
+
+> model_*.txt
+
+This file is **CRUCIAL** as it contains the name of the model (1sr raw), and the structure (2nd raw) with the empty demes in the fsc .tpl file and finally the order of the clades in the model as well as their zygosity. 
+
+**The zygosity is used to transform the homozygous strains in haploid.**
+
+
+```{bash, echo = T, eval = F}
+# in pangloss
+cd /shared/home/ialves/demoHist_yeast3039/02-scripts
+
+sbatch computingOBS_2D_multi_SFS_7.sh -i <input file dir> -o <output file dir> -s <samples file> -d <df strains/clade> -m <model file> -g <GT matrix>
+
+#example
+sbatch computingOBS_2D_multi_SFS_7.sh -i "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/SFS_137samples" -o "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/fiveClades" -s "samples27.txt" -d "df_Clade_Strains.txt" -m "model_OneDomest.txt" -g "samples27.coded.AA.GT"
+
+```
+
+## 5. Correcting mono sites in the SFS
+
+The 2D- and multi-SFS generated in the step above are corrected by using the total amount of sites surveyed. 
+
+This requires a file:
+
+> sites*samples.txt
+
+containing the number of sites surveyed without missing data (1st line), the number of polymorphic sites within the set of strains without missing data (2nd line) and the final number of polymorphic sites, after removing sites without AA and outside coding sequences (3rd line). 
+
+This is used to compute the (approx.) number of expected sites surveyed for which it's known the AA and fall in non-coding regions. 
+
+```{bash, echo = T, eval = F}
+# in pangloss
+cd /shared/home/ialves/demoHist_yeast3039/02-scripts
+
+sbatch correctingSFS_8.sh -i <input file dir> -s <sites file> -m <model file>
+
+#example
+sbatch correctingSFS_8.sh -i "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/fiveClades" -s "sites27samples.txt" -m "model_OneDomest.txt"
+```
+
+
