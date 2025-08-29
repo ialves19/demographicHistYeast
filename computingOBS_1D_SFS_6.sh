@@ -37,7 +37,7 @@ conda activate rForDemoInf
 cd ~/demoHist_yeast3039/02-scripts
 chmod +x computingOBS_1D_SFS_6.R
 
-while getopts "d:s:f:z:g:" option
+while getopts "d:s:f:z:g:b:" option
 do 
     case "${option}"
         in
@@ -47,6 +47,7 @@ do
         f)dfstrains=${OPTARG};;
         z)zig=${OPTARG};;
         g)gtmatrix=${OPTARG};;
+        b)boot=${OPTARG};;
         
     esac
 done
@@ -55,6 +56,7 @@ echo "Matrix of Positions: $gtmatrix";
 echo "List Samples: $samples";
 echo "Strain df: $dfstrains";
 echo "Zygosity df: $zig";
+echo "Analysing bootstraps? $boot";
 
 #----------------------
 # Checking if files exist
@@ -92,7 +94,7 @@ if [ $FCOUNT -eq 4 ]
 then
     echo "Running computingOBS_1D_SFS_6.R on $wrkdir and $gtmatrix matrices";
     echo "";
-    Rscript computingOBS_1D_SFS_6.R $wrkdir $samples $dfstrains $zig $gtmatrix
+    Rscript computingOBS_1D_SFS_6.R $wrkdir $samples $dfstrains $zig $gtmatrix $boot
 else 
     echo "ERROR: no input files found." 
 fi

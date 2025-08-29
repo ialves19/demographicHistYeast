@@ -5,8 +5,8 @@
 #SBATCH -c 1 			  # Nb of CPUs per task	
 #SBATCH -n 1			  # Nb tasks per CPU
 #SBATCH --job-name="fscoalStru"              # Memory per cpu
-#SBATCH -o ODstru.%N.%j.out.log      # File to which STDOUT will be written
-#SBATCH -e ODstru.%N.%j.err.log      # File to which STDERR will be written
+#SBATCH -o bootFsc.%N.%j.out.log      # File to which STDOUT will be written
+#SBATCH -e bootFsc.%N.%j.err.log      # File to which STDERR will be written
 
 start=`date +%s`
 
@@ -16,15 +16,15 @@ start=`date +%s`
 ##
 ##################
 
-wrkDir="/home2020/home/gmgm/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/input/SCALLING_fiveClades"
+wrkDir="/home2020/home/gmgm/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/input/SCALLING_fiveClades/BOOTSTRAPS"
 cd $wrkDir
 
-fscFolder="fsc27_linux64"
-#fscFolder="fsc28_linux64"
+#fscFolder="fsc27_linux64"
+fscFolder="fsc28_linux64"
 
-fsc="fsc27093"
-#fsc="fsc28012"
-#cp ../../${fscFolder}/$fsc .
+#fsc="fsc27093"
+fsc="fsc28012"
+#cp ../../../${fscFolder}/$fsc .
 
 jobcount=0
 msgs=conOutputs
@@ -37,7 +37,7 @@ runBase=1
 mkdir $msgs 2>/dev/null
 
 #-------- Default run values ------
-numSims=100000                    #-n command line option
+numSims=200000                    #-n command line option
 numCycles=40                      #-L command line option
 minValidSFSEntry=1                #-C command line option
 
@@ -70,7 +70,7 @@ then
 fi
 
 cd ${genericName}_${runNb}/
-cp ../../../../${fscFolder}/$fsc .
+cp ../../../../../${fscFolder}/$fsc .
 if [[ ! -z "$multiSFS" ]];
 then
 	cp ../${genericName}_DSFS.obs ${genericName}_${runNb}_DSFS.obs 

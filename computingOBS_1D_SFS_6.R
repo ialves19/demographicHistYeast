@@ -35,6 +35,14 @@ samplesFile <- args[2]
 dfStrains <- args[3]
 dfZygosity <- args[4]
 GTmName <- args[5]
+boot <- args[6]
+
+if(boot == F) {
+  outDir <- wrkDir
+} else {
+  bootDir <- unlist(strsplit(GTmName, split = "/"))[1]
+  outDir <- paste0(wrkDir, "/", bootDir)
+}
 
 # wrkDir <- "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/SFS_137samples"
 # samplesFile <- "samples27.txt"
@@ -91,13 +99,13 @@ for(clade in CladeIDs) {
     names(entries) <- as.character(0:length(sampleSet))
     entries[names(entries) %in% names(table(apply(subGTm, 1, sum)))] <- table(apply(subGTm, 1, sum))
     sfs_list[[clade]] <- entries
-    write.table(file=paste0(wrkDir, "/1D-SFS_", clade, ".sfs"), as.matrix(sfs_list[[clade]]), col.names = F, row.names = T, quote = F)
+    write.table(file=paste0(outDir, "/1D-SFS_", clade, ".sfs"), as.matrix(sfs_list[[clade]]), col.names = F, row.names = T, quote = F)
 
   } else {
     entries <- rep(0, (length(sampleSet)*2)+1)
     names(entries) <- as.character(0:(length(sampleSet)*2))
     entries[names(entries) %in% names(table(apply(subGTm, 1, sum)))] <- table(apply(subGTm, 1, sum))
     sfs_list[[clade]] <- entries
-    write.table(file=paste0(wrkDir, "/1D-SFS_", clade, ".sfs"), as.matrix(sfs_list[[clade]]), col.names = F, row.names = T, quote = F)
+    write.table(file=paste0(outDir, "/1D-SFS_", clade, ".sfs"), as.matrix(sfs_list[[clade]]), col.names = F, row.names = T, quote = F)
   }
 }

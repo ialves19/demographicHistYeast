@@ -44,7 +44,7 @@ conda activate rForDemoInf
 cd ~/demoHist_yeast3039/02-scripts
 chmod +x computingOBS_2D_multi_SFS_7.R
 
-while getopts "i:o:s:d:m:g:" option
+while getopts "i:o:s:d:m:g:b:" option
 do 
     case "${option}"
         in
@@ -55,6 +55,7 @@ do
         d)dfstrains=${OPTARG};;
         m)model=${OPTARG};;
         g)gtmatrix=${OPTARG};;
+        b)boot=${OPTARG};;
         
     esac
 done
@@ -63,6 +64,7 @@ echo "Matrix of Positions: $gtmatrix";
 echo "List Samples: $samples";
 echo "Strain df: $dfstrains";
 echo "Model tag: $model";
+echo "Analysing bootstraps? $boot";
 
 #----------------------
 # Checking if files exist
@@ -101,7 +103,7 @@ then
     echo "Running computingOBS_2D_multi_SFS_7.R with input dir: $indir and output dir: $outdir";
     echo "Computing SFS for model: $model"
     echo "";
-    Rscript computingOBS_2D_multi_SFS_7.R $indir $outdir $dfstrains $gtmatrix $model $samples
+    Rscript computingOBS_2D_multi_SFS_7.R $indir $outdir $dfstrains $gtmatrix $model $samples $boot
 else 
     echo "ERROR: no input files found." 
 fi

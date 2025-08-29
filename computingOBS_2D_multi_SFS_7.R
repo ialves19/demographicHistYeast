@@ -29,9 +29,10 @@ dfStrains <- args[3]
 GTmName <- args[4]
 modelFile <- args[5]
 samplesF <- args[6]
+boot <- args[7]
 
 # To debug
-# inDir <- "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/SFS_137samples"
+# inDir <- "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/SFS_134samples"
 # outDir <- "/shared/home/ialves/demoHist_yeast3039/04-analysis/fastsimcoal/fiveClades"
 # dfStrains <- "df_Clade_Strains.txt"
 # GTmName <- "samples27.coded.AA.GT"
@@ -52,7 +53,15 @@ colnames(GTmatrix) <- samples
 # ----------------
 # creating model specific folder
 # ----------------
-sfsDir <- paste0(outDir, "/", model, "_dSFS")
+if(boot == F) {
+  sfsDir <- paste0(outDir, "/", model, "_dSFS")
+} else {
+  nb.boot <-  as.numeric(unlist(strsplit(unlist(strsplit(GTmName, split = "/"))[1], split = "_"))[3])
+  sfsDir <- paste0(outDir, "/", model, "_", nb.boot, "_dSFS")
+  model <- paste0(model, "_", nb.boot)
+}
+
+#sfsDir <- paste0(outDir, "/", model, "_dSFS")
 if(dir.exists(sfsDir)){
   print("Folder ", sfsDir, " already exists.")
   print(paste0("Generating files in: ", sfsDir))

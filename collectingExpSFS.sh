@@ -17,7 +17,9 @@ start=`date +%s`
 ## sbatch runningExpSFS_100runs.sh <model name> <max Lhood run> <iteration>
 ## example: sbatch runningExpSFS_100runs.sh OneDomest 4
 ## it assumes we have done 100 simulations under the maxLhood model
-
+##
+## Isabel Alves 
+#####################
 model=$1
 maxLhoodRun=$2
 

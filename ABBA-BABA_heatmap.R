@@ -1,4 +1,7 @@
+library(pheatmap)
+
 wrkDir <- "/Users/isabel/Dropbox/UnivSTRASBOURG/PROJECTS/demoHist_yeast3039/04-analysis/ABBA-BABA/ABBA-BABA_1279strains"
+SizePlot <- 25
 
 fName_BBAA <- "ABBA-BABA_BBAA.txt"
 openDF_BBAA <- read.table(paste0(wrkDir, "/", fName_BBAA), header = T, sep = "\t")
@@ -89,10 +92,39 @@ mPValueSig[mPValue > alpha[1]] <- "ns"
 mPValueSig[mPValue < alpha[1] & mPValue > alpha[2]] <- "*"
 mPValueSig[mPValue < alpha[2] & mPValue > alpha[3]] <- "**"
 mPValueSig[mPValue < alpha[3]] <- "***"
+mPValueSig[is.na(mPValueSig)] <- ""
 
+pdf(file=paste0(wrkDir, "/Heatmap_Dstats_vs1.pdf"), height = 10, width = 10)
 pheatmap(t(mDstats), cutree_rows = 4,cutree_cols = 4, border_color = "white",
-         display_numbers = t(mPValueSig), fontsize_number = 10, 
+         display_numbers = t(mPValueSig), fontsize_number = 10, fontsize_row = 14,
+         fontsize_col = 14,
          annotation_colors = my_color, annotation_col = my_sample_name, annotation_legend = F)
+dev.off()
+
+#####
+##
+## Dstats subset demographic inference 
+##
+cladesDemoInf <- c("35. Chinese Wild", "37. Taiwan Wild 1", "30. Mantou", 
+                 "29. Sake", "13. French Dairy", "6. West Europe Wine")
+cladesOrder <- df_orderClades[order(df_orderClades$Number),1]
+
+colorCode <- colorCodeDf$Color[match(factor(cladesOrder),colorCodeDf$Name)]
+mergedDF_BBAA$P3 <- factor(mergedDF_BBAA$P3, levels = cladesOrder, ordered = T)
+
+xxx <- mergedDF_BBAA %>% filter(P3 %in% cladesDemoInf) %>% filter(P2 %in% cladesDemoInf) %>%
+  filter(P1 %in% cladesDemoInf)
+colorCode_xxx <- colorCodeDf %>% filter(Name %in% cladesDemoInf) %>% select(Name,Color)
+colorCode_xxx$Name <- factor(colorCode_xxx$Name)
+xxx %>% ggplot(aes(x=Dstatistic, y=P1P2)) + 
+  geom_pointrange(aes(xmin=Dstatistic-standError, xmax=Dstatistic+standError, color=P3), position = position_dodge(.01), fatten = 2) + 
+  geom_vline(xintercept = 0, color="grey80", linetype="dotted") + 
+  facet_wrap_paginate(~P3, ncol = 3, nrow = 2) + #, page=7
+  scale_color_manual(values = colorCode_xxx$Color) + 
+  theme_classic() + 
+  theme(legend.position = "none",axis.title.x=element_text(size=10, color="grey20"), axis.title.y=element_text(size=10, color="grey20")) + 
+  labs(x="Dstatistic", y="(P1,P2)") 
+ggsave("Dstats_DemoInfGROUPS.pdf", height = SizePlot*5, width = SizePlot*8, units = "mm")
 
 #####
 ##
